@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using dotnetcore_docker.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.AspNetCore.Authorization;
@@ -46,6 +47,11 @@ namespace dotnetcore_docker
                 options.Filters.Add(new AuthorizeFilter(policy));
             })
             .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Authenticated", policy => policy.RequireAuthenticatedUser());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -60,11 +66,16 @@ namespace dotnetcore_docker
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
+            app.UseProtectFolder(new ProtectFolderOptions
+            {
+                Path = "/",
+                PolicyName = "Authenticated"
+            });
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            app.UseDefaultFiles();
-            app.UseCookiePolicy();
+            //app.UseStaticFiles();
+            app.UseFileServer();
+            // app.UseCookiePolicy();
 
             app.UseAuthentication();
 
